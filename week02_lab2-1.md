@@ -1060,7 +1060,145 @@ void main() {
 **บันทึกผลการทดลอง: บันทึกโค้ดคำสั่งที่ได้**
 ```dart
 // บันทึกโค้ดในส่วนนี้
+// ==========================================
+// Base Class & CheckingAccount
+// ==========================================
+class BankAccount {
+  final String ownerName;
+  double _balance;
+  final List<String> _history = [];
 
+  BankAccount({required this.ownerName, double initial = 0}) : _balance = initial {
+    if (initial > 0) _history.add("+ เปิดบัญชี ${initial.toStringAsFixed(2)} บาท");
+  }
+
+  double get balance => _balance;
+
+  void deposit(double amount) {
+    if (amount <= 0) return;
+    _balance += amount;
+    _history.add("+ ฝากเงิน ${amount.toStringAsFixed(2)} บาท");
+  }
+
+  bool withdraw(double amount) {
+    if (amount <= 0 || amount > _balance) return false;
+    _balance -= amount;
+    _history.add("- ถอนเงิน ${amount.toStringAsFixed(2)} บาท");
+    return true;
+  }
+
+  void printStatement() {
+    print("Statement: คุณ $ownerName | ยอดคงเหลือ: ${_balance.toStringAsFixed(2)} บาท");
+    for (var record in _history) print("  $record");
+  }
+}
+
+class CheckingAccount extends BankAccount {
+  CheckingAccount({required String ownerName, double initial = 0})
+      : super(ownerName: ownerName, initial: initial);
+
+  @override
+  bool withdraw(double amount) {
+    if (amount <= 0) return false;
+
+    if (amount <= _balance) return super.withdraw(amount);
+
+    double overdraftNeeded = amount - _balance;
+    if (overdraftNeeded > 500) {
+      print("❌ ถอนเงินไม่สำเร็จ: เกินวงเงิน Overdraft 500 บาท");
+      return false;
+    }
+
+    _balance -= amount; 
+    _history.add("- ถอนเงินเกินบัญชี (Overdraft) ${amount.toStringAsFixed(2)} บาท");
+    
+    _balance -= 50;
+    _history.add("- ค่าธรรมเนียม Overdraft 50.00 บาท");
+    
+    print("⚠️ ถอนเงินเกินบัญชีสำเร็จ (คิดค่าธรรมเนียม 50 บาท)");
+    return true;
+  }
+}
+
+// ==========================================
+// Abstract Class & Vehicle Models
+// ==========================================
+abstract class Vehicle {
+  double _fuelLeft = 0;
+
+  double get fuelEfficiency; 
+  double get fuelLeft => _fuelLeft;
+
+  void refuel(double liters) {
+    if (liters <= 0) return;
+    _fuelLeft += liters;
+    print("⛽ เติมน้ำมัน: +$liters ลิตร (คงเหลือ: $_fuelLeft ลิตร)");
+  }
+
+  void drive(double km) {
+    double fuelNeeded = km / fuelEfficiency;
+
+    if (fuelNeeded > _fuelLeft) {
+      print("❌ น้ำมันไม่พอสำหรับระยะทาง $km กม.");
+      return;
+    }
+
+    _fuelLeft -= fuelNeeded;
+    print("🚗 วิ่ง $km กม. | ใช้น้ำมัน ${fuelNeeded.toStringAsFixed(2)} ลิตร (เหลือ: ${_fuelLeft.toStringAsFixed(2)} ลิตร)");
+  }
+}
+
+class Car extends Vehicle {
+  @override
+  final double fuelEfficiency = 15.0; 
+}
+
+class Truck extends Vehicle {
+  @override
+  final double fuelEfficiency = 6.0; 
+}
+
+// ==========================================
+// Mixin & Product Model
+// ==========================================
+mixin Discountable on Product {
+  void applyDiscount(double percent) {
+    if (percent <= 0 || percent > 100) return;
+    double discount = price * (percent / 100);
+    price -= discount;
+    print("🏷️ ลดราคา $name $percent% -> เหลือ ${price.toStringAsFixed(2)} บาท");
+  }
+}
+
+class Product {
+  String name;
+  double price;
+
+  Product({required this.name, required this.price});
+}
+
+class ShopItem extends Product with Discountable {
+  ShopItem({required String name, required double price}) : super(name: name, price: price);
+}
+
+// ==========================================
+// Main Execution
+// ==========================================
+void main() {
+  print("--- CheckingAccount Test ---");
+  var checkAcc = CheckingAccount(ownerName: "สมชาย", initial: 1000);
+  checkAcc.withdraw(1200); 
+  checkAcc.printStatement();
+
+  print("\n--- Vehicle Test ---");
+  var car = Car()..refuel(20)..drive(150);
+  var truck = Truck()..refuel(20)..drive(150);
+
+  print("\n--- Mixin Product Test ---");
+  // อัปเดตสินค้าเป็นหูฟังบลูทูธตามต้องการเรียบร้อยครับ
+  var gadget = ShopItem(name: "หูฟังบลูทูธ", price: 2500);
+  gadget.applyDiscount(15);
+}
 
 ```
 ---
