@@ -1499,7 +1499,85 @@ void main() async {
 **บันทึกผลการทดลอง: บันทึกโค้ดคำสั่งที่ได้**
 ```dart
 // บันทึกโค้ดในส่วนนี้
+import 'dart:async';
 
+// ====================================================================
+// 1. ฟังก์ชันคำนวณภาษีตามอัตราก้าวหน้า (มี Delay 0.5 วินาที)
+// ====================================================================
+Future<double> calculateTax(double income) async {
+  await Future.delayed(const Duration(milliseconds: 500)); // หน่วงเวลา 0.5 วินาทีตามโจทย์
+
+  if (income <= 150000) return 0.0;
+  if (income <= 300000) return income * 0.05;
+  if (income <= 500000) return income * 0.10;
+  return income * 0.20;
+}
+
+// ====================================================================
+// 2. Stream จำลองการส่ง Chat Message ทุก 1 วินาที เป็นเวลา 5 ครั้ง (เอาฟิวบอตจริง)
+// ====================================================================
+Stream<String> getChatBotStream() async* {
+  final messages = [
+    "สวัสดีครับ แอดมินรับเรื่องคำนวณภาษีครับ",
+    "ได้รับยอดรายได้ของคุณเรียบร้อยแล้ว",
+    "กำลังคิดเลขให้ครับ รอแป๊บนึงนะ...",
+    "ระบบคำนวณภาษีให้เสร็จแล้วครับ!",
+    "ขอบคุณที่ใช้บริการครับ"
+  ];
+
+  for (var msg in messages) {
+    await Future.delayed(const Duration(seconds: 1)); // หน่วงเวลาส่งข้อความทุก 1 วินาที
+    yield msg; // ส่งข้อความออกไปทาง Stream ทีละข้อความ
+  }
+}
+
+// ====================================================================
+// 3. ฟังก์ชันหลักในการรันระบบและคำนวณผลรวมภาษี (Main)
+// ====================================================================
+void main() async {
+  print("=== เริ่มการทำงานระบบจำลองแชทภาษี (Tax Chat Bot) ===\n");
+
+  // ข้อมูลรายได้ของผู้ใช้ 3 คนที่ระบบต้องดึงข้อมูลมาคำนวณพร้อมกัน
+  final userIncomes = [120000.0, 280000.0, 600000.0];
+  List<double>? taxResults;
+  double totalTax = 0.0;
+
+  int chatCount = 1;
+
+  // ใช้ await for ในการดึงข้อความจาก Stream ออกมาแสดงผลแบบ Real-time
+  await for (String message in getChatBotStream()) {
+    print("💬 แชทที่ $chatCount: $message");
+
+    // จังหวะที่ 3: บอตบอกว่ากำลังคิดเลข -> ให้แอบยิง Future.wait คำนวณภาษี 3 คนพร้อมกันเบื้องหลังทันที
+    if (chatCount == 3) {
+      print("   [System] ⚙️ กำลังประมวลผลภาษีของบุคคลทั้ง 3 คนในรูปแบบ Parallel...");
+      
+      taxResults = await Future.wait([
+        calculateTax(userIncomes[0]),
+        calculateTax(userIncomes[1]),
+        calculateTax(userIncomes[2]),
+      ]);
+      
+      // หาผลรวมภาษีทั้งหมด
+      totalTax = taxResults.reduce((sum, tax) => sum + tax);
+    }
+
+    // จังหวะที่ 4: บอตบอกว่าคำนวณเสร็จแล้ว -> ให้ปริ้นต์สรุปข้อมูลของทั้ง 3 คนและยอดรวมออกมา
+    if (chatCount == 4 && taxResults != null) {
+      print("   --------------------------------------------------");
+      print("   📊 [สรุปรายงานภาษีจากฐานข้อมูล]");
+      print("   > คนที่ 1 (รายได้: ${userIncomes[0].toStringAsFixed(0)}) -> ภาษี: ${taxResults[0].toStringAsFixed(2)} บาท");
+      print("   > คนที่ 2 (รายได้: ${userIncomes[1].toStringAsFixed(0)}) -> ภาษี: ${taxResults[1].toStringAsFixed(2)} บาท");
+      print("   > คนที่ 3 (รายได้: ${userIncomes[2].toStringAsFixed(0)}) -> ภาษี: ${taxResults[2].toStringAsFixed(2)} บาท");
+      print("   💰 ผลรวมภาษีทั้งหมด: ${totalTax.toStringAsFixed(2)} บาท");
+      print("   --------------------------------------------------");
+    }
+
+    chatCount++;
+  }
+
+  print("\n✅ จบกระบวนการทำงานและปิดหน้าต่างแชท");
+}
 
 ```
 ---
