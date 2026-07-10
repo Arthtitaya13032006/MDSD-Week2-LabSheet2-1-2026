@@ -253,6 +253,7 @@ void main() {
 ```
 
 **ขั้นตอนที่ 7** กด Run และบันทึกผลลัพธ์ทั้งหมด
+<img width="1918" height="807" alt="image" src="https://github.com/user-attachments/assets/b2edcfb5-8cb8-4715-a277-fd9d5e661040" />
 
 ---
 
