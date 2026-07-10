@@ -635,7 +635,85 @@ void main() {
 **บันทึกผลการทดลอง: บันทึกโค้ดคำสั่งที่ได้**
 ```dart
 // บันทึกโค้ดในส่วนนี้
+// 1. Function หาคนที่มี GPA สูงสุดในคณะที่ระบุ
+String findTopStudentByFaculty(List<Map<String, dynamic>> students, String faculty) {
+  // กรองเฉพาะนักศึกษาที่อยู่คณะนั้นๆก่อน
+  var facultyStudents = students.where((s) => s["faculty"] == faculty).toList();
+  
+  if (facultyStudents.isEmpty) return "ไม่พบคณะนี้ในระบบ";
+  
+  // ใช้ reduce() เพื่อหาคนที่ GPA สูงที่สุดในคณะ
+  var topStudent = facultyStudents.reduce((a, b) => 
+    (a["gpa"] as double) > (b["gpa"] as double) ? a : b
+  );
+  
+  return "${topStudent["name"]} (${topStudent["gpa"]})";
+}
 
+// 2. Function จัดกลุ่มนักศึกษาตามคณะ
+Map<String, List<Map<String, dynamic>>> groupByFaculty(List<Map<String, dynamic>> students) {
+  Map<String, List<Map<String, dynamic>>> grouped = {};
+  
+  for (var s in students) {
+    String faculty = s["faculty"];
+    // ถ้ายังไม่มี Key ของคณะนี้ใน Map ให้สร้าง List ว่างๆ ขึ้นมารอไว้ก่อน
+    if (!grouped.containsKey(faculty)) {
+      grouped[faculty] = [];
+    }
+    // เพิ่มนักศึกษาคนนั้นเข้าไปใน List ของคณะตัวเอง
+    grouped[faculty]!.add(s);
+  }
+  
+  return grouped;
+}
+
+void main() {
+  List<Map<String, dynamic>> students = [
+    {"name": "สมชาย",  "gpa": 3.75, "year": 3, "faculty": "วิศวกรรม"},
+    {"name": "สมหญิง", "gpa": 2.50, "year": 1, "faculty": "วิทยาศาสตร์"},
+    {"name": "สมศักดิ์","gpa": 3.10, "year": 2, "faculty": "วิศวกรรม"},
+    {"name": "สมใจ",  "gpa": 1.80, "year": 4, "faculty": "บริหาร"},
+    {"name": "สมปอง", "gpa": 3.50, "year": 2, "faculty": "วิทยาศาสตร์"},
+    {"name": "สมศรี", "gpa": 2.90, "year": 3, "faculty": "บริหาร"},
+  ];
+
+  // ==========================================
+  // ข้อที่ 1: ค้นหานักศึกษาที่มี GPA สูงสุดแยกตามคณะ
+  // ==========================================
+  print("=== นักศึกษา GPA สูงสุดแยกตามคณะ ===");
+  print("คณะวิศวกรรม: ${findTopStudentByFaculty(students, "วิศวกรรม")}");
+  print("คณะวิทยาศาสตร์: ${findTopStudentByFaculty(students, "วิทยาศาสตร์")}");
+  print("คณะบริหาร: ${findTopStudentByFaculty(students, "บริหาร")}");
+
+  // ==========================================
+  // ข้อที่ 2: จัดกลุ่มนักศึกษาตามคณะ
+  // ==========================================
+  print("\n=== การจัดกลุ่มนักศึกษาตามคณะ ===");
+  var facultyMap = groupByFaculty(students);
+  
+  facultyMap.forEach((faculty, list) {
+    print("คณะ $faculty:");
+    for (var s in list) {
+      print("  - ${s["name"]} (GPA: ${s["gpa"]})");
+    }
+  });
+
+  // ==========================================
+  // ข้อที่ 3: เรียงลำดับ GPA จากสูงไปต่ำ และแสดง Top 3
+  // ==========================================
+  print("\n=== นักศึกษาที่มี GPA สูงสุด 3 อันดับแรก ===");
+  
+  // ใช้ sort() ร่วมกับ compareTo ในการเรียงลำดับ (b เทียบกับ a จะได้จากมากไปน้อย)
+  students.sort((a, b) => (b["gpa"] as double).compareTo(a["gpa"] as double));
+  
+  // ใช้ take(3) เพื่อดึงเอามาแค่ 3 อันดับแรก
+  var top3Students = students.take(3).toList();
+  
+  for (int i = 0; i < top3Students.length; i++) {
+    var s = top3Students[i];
+    print("${i + 1}. ${s["name"]} (คณะ: ${s["faculty"]}) GPA: ${s["gpa"]}");
+  }
+}
 
 ```
 ---
